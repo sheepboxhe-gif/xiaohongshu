@@ -559,12 +559,16 @@ async function loadComments(postId) {
 function renderCommentItem(c) {
     // 如果没有头像（如管理员评论），显示默认头像
     const avatar = c.avatar || '🍠';
+    const canReply = currentUser || isAdmin;
+    // 如果有 parent_id，显示回复标识
+    const replyTag = c.parent_id ? '<span class="reply-tag">回复</span> ' : '';
     return `
-        <div class="comment-item" data-comment-id="${c.id}">
+        <div class="comment-item ${c.parent_id ? 'reply-comment' : ''}" data-comment-id="${c.id}">
             <div class="comment-avatar">${avatar}</div>
             <div class="comment-body">
                 <div class="comment-header">
                     <span class="comment-author">${c.user_id}</span>
+                    ${replyTag}
                     <span class="comment-meta">${formatTime(c.created_at)}</span>
                 </div>
                 <div class="comment-text">${escapeHtml(c.content)}</div>
@@ -572,13 +576,21 @@ function renderCommentItem(c) {
                     <span class="comment-action" onclick="likeComment(${c.id})">
                         🤍 ${c.likes || 0}
                     </span>
+                    ${canReply ? `<span class="comment-action" onclick="showReplyInput(${c.post_id}, ${c.id})">↩️ 回复</span>` : ''}
+                </div>
+                <div class="reply-input-area" id="reply-input-${c.id}" style="display: none;">
+                    <input type="text" class="comment-input reply-input" id="reply-text-${c.id}" 
+                           placeholder="回复 ${escapeHtml(c.user_id)}..." 
+                           onkeypress="if(event.key==='Enter')submitReply(${c.post_id}, ${c.id})">
+                    <button class="comment-submit reply-submit" onclick="submitReply(${c.post_id}, ${c.id})">发送</button>
+                    <button class="comment-submit reply-cancel" onclick="hideReplyInput(${c.id})">取消</button>
                 </div>
             </div>
         </div>
     `;
 }
 
-async function submitComment(postId) {
+async function submitComment(postId, parentId = null) {
     // 获取用户ID：普通用户、用户模式下的管理员、或直接使用管理员身份
     const userId = currentUser ? currentUser.userId : (isAdmin ? '管理员' : null);
     
@@ -600,7 +612,8 @@ async function submitComment(postId) {
             body: JSON.stringify({
                 postId,
                 userId: userId,
-                content
+                content,
+                parentId
             })
         });
     } catch (err) {
@@ -608,28 +621,76 @@ async function submitComment(postId) {
     }
 }
 
+// 显示回复输入框
+function showReplyInput(postId, commentId) {
+    const replyArea = document.getElementById(`reply-input-${commentId}`);
+    if (replyArea) {
+        replyArea.style.display = 'flex';
+        document.getElementById(`reply-text-${commentId}`).focus();
+    }
+}
+
+// 隐藏回复输入框
+function hideReplyInput(commentId) {
+    const replyArea = document.getElementById(`reply-input-${commentId}`);
+    if (replyArea) {
+        replyArea.style.display = 'none';
+        document.getElementById(`reply-text-${commentId}`).value = '';
+    }
+}
+
+// 提交回复
+async function submitReply(postId, parentId) {
+    const userId = currentUser ? currentUser.userId : (isAdmin ? '管理员' : null);
+    
+    if (!userId) {
+        showToast('请先登记');
+        return;
+    }
+    
+    const input = document.getElementById(`reply-text-${parentId}`);
+    const content = input.value.trim();
+    if (!content) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/api/comment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                postId,
+                userId: userId,
+                content,
+                parentId
+            })
+        });
+        
+        if (res.ok) {
+            hideReplyInput(parentId);
+            // 重新加载评论以显示回复
+            loadComments(postId);
+        }
+    } catch (err) {
+        showToast('❌ 回复失败');
+    }
+}
+
 function addCommentRealtime(data) {
     const { postId, comment } = data;
+    
+    // 如果是回复评论，不在这里添加（通过重新加载评论列表显示）
+    if (comment.parent_id) {
+        loadComments(postId);
+        return;
+    }
+    
     const list = document.getElementById(`comments-list-${postId}`);
     
     if (list) {
+        // 添加 post_id 到评论对象以便渲染回复功能
+        const commentWithPostId = { ...comment, post_id: postId };
         const div = document.createElement('div');
-        div.className = 'comment-item';
-        const avatar = comment.avatar || '🍠';
-        div.innerHTML = `
-            <div class="comment-avatar">${avatar}</div>
-            <div class="comment-body">
-                <div class="comment-header">
-                    <span class="comment-author">${comment.user_id}</span>
-                    <span class="comment-meta">刚刚</span>
-                </div>
-                <div class="comment-text">${escapeHtml(comment.content)}</div>
-                <div class="comment-actions">
-                    <span class="comment-action">🤍 0</span>
-                </div>
-            </div>
-        `;
-        list.insertBefore(div, list.firstChild);
+        div.innerHTML = renderCommentItem(commentWithPostId);
+        list.insertBefore(div.firstElementChild, list.firstChild);
         
         const countEl = document.getElementById(`comment-count-${postId}`);
         if (countEl) {

@@ -611,6 +611,50 @@ body {
     color: #FF2442;
 }
 
+/* 回复输入框样式 */
+.reply-input-area {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    animation: slideIn 0.2s ease;
+}
+
+.reply-input {
+    flex: 1;
+    font-size: 13px;
+    padding: 8px 12px;
+}
+
+.reply-submit {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.reply-cancel {
+    background: #999;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.reply-cancel:hover {
+    background: #777;
+}
+
+/* 回复评论样式 */
+.reply-comment {
+    margin-left: 40px;
+    background: #f8f8f8;
+}
+
+.reply-tag {
+    font-size: 11px;
+    color: #FF2442;
+    background: #FFF0F0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
