@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小红薯 - 实时互动社区</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 连接状态 -->
+    <div class="connection-status" id="connStatus">● 连接中...</div>
+
+    <!-- 顶部导航 -->
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">🍠</div>
+            <div class="site-name">小红薯</div>
+        </div>
+        <button class="admin-btn" onclick="showAdminLogin()">管理员入口</button>
+    </header>
+
+    <!-- 主体内容 -->
+    <div class="main-container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <!-- 用户信息卡片 -->
+            <div class="user-card" id="userCard" style="display: none;">
+                <div class="card-title">👤 我的信息</div>
+                <div class="user-info">
+                    <div class="user-avatar" id="displayAvatar">🐱</div>
+                    <div class="user-details">
+                        <h3 id="displayName">用户名</h3>
+                        <p id="displayMeta">男 · 18-30岁</p>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="logout()">🚪 退出登录</button>
+            </div>
+
+            <!-- 管理员卡片 -->
+            <div class="user-card" id="adminCard" style="display: none;">
+                <div class="card-title">🔐 管理员</div>
+                <div class="user-info">
+                    <div class="user-avatar">🍠</div>
+                    <div class="user-details">
+                        <h3>管理员</h3>
+                        <p>拥有完整管理权限</p>
+                    </div>
+                </div>
+                <button class="register-btn" onclick="switchToUserMode()" style="margin-top: 16px;">👤 切换到用户模式</button>
+                <button class="logout-btn" onclick="logout()">🚪 退出登录</button>
+            </div>
+
+            <!-- 未登录提示 -->
+            <div class="user-card" id="guestCard">
+                <div class="card-title">👋 欢迎</div>
+                <p class="welcome-text">
+                    请先完成身份登记<br>
+                    开启小红薯之旅 🍠
+                </p>
+                <button class="register-btn" onclick="showRoleModal()">立即登记</button>
+            </div>
+
+            <!-- 实时统计 -->
+            <div class="stats-card" id="statsCard" style="display: none;">
+                <div class="card-title">
+                    📊 实时统计
+                    <button class="clear-stats-btn" id="clearStatsBtn" onclick="clearStats()" style="display: none;">
+                        🗑️ 清除数据
+                    </button>
+                </div>
+                
+                <div class="stat-section">
+                    <div class="stat-header">
+                        <span>性别分布</span>
+                        <span class="stat-total" id="totalUsers">共0人</span>
+                    </div>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar male-bar" id="maleBar" style="width: 0%">
+                            男 <span id="malePercent">0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-numbers">
+                        <span>👨 男生 <b id="maleCount">0</b>人</span>
+                        <span>👩 女生 <b id="femaleCount">0</b>人</span>
+                    </div>
+                </div>
+
+                <div class="stat-section">
+                    <div class="stat-header">年龄分布</div>
+                    
+                    <div class="age-stat">
+                        <div class="age-label">
+                            <span>🎓 18-30岁</span>
+                            <b id="age1Count">0人</b>
+                        </div>
+                        <div class="age-bar-bg">
+                            <div class="age-bar age-bar-1" id="age1Bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="age-stat">
+                        <div class="age-label">
+                            <span>💼 31-45岁</span>
+                            <b id="age2Count">0人</b>
+                        </div>
+                        <div class="age-bar-bg">
+                            <div class="age-bar age-bar-2" id="age2Bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="age-stat">
+                        <div class="age-label">
+                            <span>🌟 46-55岁</span>
+                            <b id="age3Count">0人</b>
+                        </div>
+                        <div class="age-bar-bg">
+                            <div class="age-bar age-bar-3" id="age3Bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 右侧内容区 -->
+        <main class="content-area">
+            <!-- 发帖框（仅管理员） -->
+            <div class="post-creator" id="postCreator" style="display: none;">
+                <div class="creator-title">✍️ 发布新帖</div>
+                <textarea class="post-input" id="postContent" placeholder="分享你的想法..."></textarea>
+                <div class="creator-actions">
+                    <span class="hint">管理员专用</span>
+                    <button class="post-btn" onclick="publishPost()">发布帖子</button>
+                </div>
+            </div>
+
+            <!-- 帖子列表 -->
+            <div id="postsContainer">
+                <div class="loading">加载中...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 身份选择弹窗 -->
+    <div class="modal-overlay" id="roleModal">
+        <div class="login-modal" style="max-width: 400px;">
+            <div class="modal-title">🍠 欢迎来到小红薯</div>
+            <div class="modal-subtitle">请选择您的身份</div>
+            
+            <div class="role-options">
+                <div class="role-option admin-role" onclick="selectAdminRole()">
+                    <div class="role-emoji">🔐</div>
+                    <div class="role-text">我是管理员</div>
+                    <div class="role-desc">输入密码管理网站</div>
+                </div>
+                <div class="role-option user-role" onclick="selectUserRole()">
+                    <div class="role-emoji">👤</div>
+                    <div class="role-text">我是用户</div>
+                    <div class="role-desc">浏览和参与互动</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理员登录弹窗 -->
+    <div class="modal-overlay" id="adminModal" style="display: none;">
+        <div class="login-modal" style="max-width: 360px;">
+            <div class="modal-title">🔐 管理员验证</div>
+            <div class="modal-subtitle">请输入管理员密码</div>
+            <input type="password" class="admin-input" id="adminPassword" placeholder="输入密码" onkeypress="if(event.key==='Enter')verifyAdmin()">
+            <button class="submit-btn" onclick="verifyAdmin()">验证</button>
+            <button class="submit-btn cancel-btn" onclick="closeAdminModal()">取消</button>
+        </div>
+    </div>
+
+    <!-- 登记弹窗 -->
+    <div class="modal-overlay" id="registerModal" style="display: none;">
+        <div class="login-modal">
+            <div class="modal-title">🍠 欢迎加入小红薯</div>
+            <div class="modal-subtitle">完成简单登记，开始探索精彩内容</div>
+
+            <div class="form-group">
+                <label class="form-label">1. 选择你的头像</label>
+                <div class="avatar-options">
+                    <div class="avatar-option" data-avatar="👨" onclick="selectAvatar(this)">👨</div>
+                    <div class="avatar-option" data-avatar="👩" onclick="selectAvatar(this)">👩</div>
+                    <div class="avatar-option" data-avatar="☁️" onclick="selectAvatar(this)">☁️</div>
+                    <div class="avatar-option" data-avatar="🐱" onclick="selectAvatar(this)">🐱</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">2. 设置用户ID</label>
+                <div class="id-input-group">
+                    <input type="text" class="id-input" id="userId" placeholder="输入自定义ID或随机生成" maxlength="12">
+                    <button class="random-btn" onclick="generateRandomId()">🎲 随机</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">3. 选择性别</label>
+                <div class="gender-options">
+                    <div class="gender-option" data-gender="男" onclick="selectGender(this)">
+                        <span class="gender-emoji">👨</span>
+                        <span class="gender-text">男生</span>
+                    </div>
+                    <div class="gender-option" data-gender="女" onclick="selectGender(this)">
+                        <span class="gender-emoji">👩</span>
+                        <span class="gender-text">女生</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">4. 选择年龄段</label>
+                <div class="age-options">
+                    <div class="age-option" data-age="18-30岁" onclick="selectAge(this)">
+                        <div class="age-info">
+                            <span class="age-emoji">🎓</span>
+                            <span class="age-text">18-30岁</span>
+                        </div>
+                        <div class="age-check">✓</div>
+                    </div>
+                    <div class="age-option" data-age="31-45岁" onclick="selectAge(this)">
+                        <div class="age-info">
+                            <span class="age-emoji">💼</span>
+                            <span class="age-text">31-45岁</span>
+                        </div>
+                        <div class="age-check">✓</div>
+                    </div>
+                    <div class="age-option" data-age="46-55岁" onclick="selectAge(this)">
+                        <div class="age-info">
+                            <span class="age-emoji">🌟</span>
+                            <span class="age-text">46-55岁</span>
+                        </div>
+                        <div class="age-check">✓</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="submit-btn" id="submitBtn" onclick="submitRegister()" disabled>进入小红薯</button>
+            <button class="submit-btn cancel-btn" onclick="closeRegister()">暂不登记</button>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div class="toast" id="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
