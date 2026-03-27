@@ -244,7 +244,6 @@ body {
 
 .stat-bar {
     height: 100%;
-    background: linear-gradient(90deg, #4A90E2, #357ABD);
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -253,6 +252,14 @@ body {
     font-size: 12px;
     font-weight: bold;
     transition: width 0.5s ease;
+}
+
+.male-bar {
+    background: linear-gradient(90deg, #4A90E2, #357ABD);
+}
+
+.female-bar {
+    background: linear-gradient(90deg, #FF6B9D, #FF2442);
 }
 
 .stat-numbers {

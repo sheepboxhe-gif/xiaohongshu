@@ -713,8 +713,12 @@ function updateStatsUI(stats) {
     
     const total = stats.total || 1;
     const malePercent = Math.round(stats.male / total * 100);
+    const femalePercent = Math.round(stats.female / total * 100);
+    
     document.getElementById('maleBar').style.width = malePercent + '%';
     document.getElementById('malePercent').textContent = malePercent + '%';
+    document.getElementById('femaleBar').style.width = femalePercent + '%';
+    document.getElementById('femalePercent').textContent = femalePercent + '%';
     
     const maxAge = Math.max(stats.age18_30, stats.age31_45, stats.age46_55) || 1;
     document.getElementById('age1Bar').style.width = (stats.age18_30 / maxAge * 100) + '%';
