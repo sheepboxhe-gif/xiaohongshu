@@ -1,0 +1,4 @@
+node_modules/
+.env
+.DS_Store
+xiaohongshu.db # 如果有数据库文件也不要上传
